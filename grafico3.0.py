@@ -66,9 +66,9 @@ transmisores = []
 for i in range(3):
     st.sidebar.subheader(f"Transmisor {i+1}")
     activo = st.sidebar.checkbox(f"Activar Tx{i+1}", value=True)
-    P_tx = st.sidebar.number_input(f"Potencia Tx{i+1} (μW)", min_value=0.0, value=0.0, step=100.0)
-    Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=0.0 + i*10, step=1.0)
-    Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=0.0, step=1.0)
+    P_tx = st.sidebar.number_input(f"Potencia Tx{i+1} (μW)", min_value=0.0, value=100.0, step=100.0)
+    Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=1000.0 + i*10, step=1.0)
+    Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=20.0, step=1.0)
 
     transmisores.append({
         "P_tx_uW": P_tx,
@@ -178,6 +178,7 @@ st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
     st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`")
+
 
 
 
