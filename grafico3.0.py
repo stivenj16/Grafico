@@ -164,20 +164,41 @@ ax.grid(True, linestyle=':', alpha=0.6)
 
 st.pyplot(fig)
 
-# --- RESULTADOS NUMÉRICOS ---
-P_total_uw = sum(tx['P_tx_uW'] for tx in activos)
-P_combinada_dBm = uw_to_dbm(P_total_uw) - combinador_perdida_dB
+ # --- RESULTADOS ---
+        st.subheader("📋 Resultados del Sistema")
+        texto = "=== SISTEMA DE 3 TRANSMISORES ===\n\n--- Configuración de Transmisores ---\n"
+        for i, tx in enumerate(lista_tx, 1):
+            if tx['activo']:
+                P_individual_dBm = uw_to_dbm(tx['P_tx_uW']) - combinador_perdida_dB
+                P_pico_individual_dBm = P_individual_dBm + G_total_dB
+                f_min = tx['Fc'] - tx['Bw_tx']/2
+                f_max = tx['Fc'] + tx['Bw_tx']/2
+                texto += (f"Tx{i}: {tx['P_tx_uW']} μW, Fc: {tx['Fc']/1e6:.0f} MHz, BW: {tx['Bw_tx']/1e6:.0f} MHz\n"
+                          f"     Pico: {P_pico_individual_dBm:.2f} dBm, "
+                          f"Fmin: {f_min/1e6:.1f} MHz, Fmax: {f_max/1e6:.1f} MHz\n")
+            else:
+                texto += f"Tx{i}: INACTIVO\n"
 
-st.subheader("📈 Resultados del Sistema")
-st.write(f"**Potencia Total Combinada:** {P_total_uw:.2f} μW = {P_combinada_dBm:.2f} dBm")
-st.write(f"**Ganancia Total:** {G_total_dB:.2f} dB")
-st.write(f"**Pico Total Radiado:** {P_combinada_dBm + G_total_dB:.2f} dBm")
-st.write(f"**Piso de Ruido:** {N_Piso_dBm:.2f} dBm")
+        texto += ("\n--- Cadena de Transmisión ---\n"
+                  f"Pérdida del Combinador: {combinador_perdida_dB:.1f} dB\n"
+                  f"Ganancia del Amplificador: {ganancia_amp_dB:.1f} dB\n"
+                  f"Pérdida en Línea de Tx: {perdida_ltx_dB:.1f} dB\n"
+                  f"Ganancia de Antena: {ganancia_ant_dBi:.1f} dBi\n"
+                  f"Ganancia Total del Sistema: {G_total_dB:.2f} dB\n\n"
+                  "--- Potencias ---\n"
+                  f"Potencia Total Combinada: {P_total_uw:.1f} μW = {P_combinada_dBm:.2f} dBm\n"
+                  f"Pico de Potencia Radiada Total: {P_combinada_dBm + G_total_dB:.2f} dBm\n\n"
+                  "--- Parámetros de Ruido ---\n"
+                  f"Piso de Ruido Térmico: {N_Piso_dBm:.2f} dBm\n"
+                  + "-"*60)
+
+        st.text_area("Resultados detallados", texto, height=400)
 
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
     st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`")
+
 
 
 
