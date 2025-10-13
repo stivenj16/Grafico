@@ -16,6 +16,16 @@ kB = 1.380649e-23
 bw_medidor = 1e6
 
 # --- FUNCIONES AUXILIARES ---
+def convertir_a_watts(valor, unidad):
+    """Convierte la potencia a vatios según la unidad seleccionada."""
+    conversiones = {
+        "W": 1,
+        "mW": 1e-3,
+        "µW": 1e-6,
+        "GW": 1e9
+    }
+    return valor * conversiones.get(unidad, 1)
+
 def w_to_dbm(P_w):
     return 10 * np.log10(P_w / 0.001)
 
@@ -66,17 +76,27 @@ transmisores = []
 for i in range(3):
     st.sidebar.subheader(f"Transmisor {i+1}")
     activo = st.sidebar.checkbox(f"Activar Tx{i+1}", value=True)
-    P_tx = st.sidebar.number_input(f"Potencia Tx{i+1} (W)", min_value=0.0, value=1000.0, step=100.0)
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        P_tx = st.number_input(f"Potencia Tx{i+1}", min_value=0.0, value=1000.0, step=10.0)
+    with col2:
+        unidad = st.selectbox(f"Unidad Tx{i+1}", ["W", "mW", "µW", "GW"], index=0)
+
     Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=2400.0 + i*10, step=1.0)
     Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=20.0, step=1.0)
 
+    P_tx_W = convertir_a_watts(P_tx, unidad)
+
     transmisores.append({
-        "P_tx_W": P_tx,
+        "P_tx_W": P_tx_W,
         "Fc": Fc * 1e6,
         "Bw_tx": Bw * 1e6,
         "activo": activo,
-        "color": colores[i]
+        "color": colores[i],
+        "unidad": unidad,
+        "P_tx_original": P_tx
     })
+    
 
 # --- VALIDACIÓN ---
 activos = [tx for tx in transmisores if tx["activo"] and tx["P_tx_W"] > 0]
@@ -187,6 +207,5 @@ st.write(f"**Piso de Ruido Térmico:** {N_Piso_dBm:.2f} dBm\n")
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
-       st.markdown(f"**{tx_data['nombre']}**| Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
-
+       st.markdown(f"**{tx_data['nombre']}** | Potencia: `{tx_data['P_tx_original']} {tx_data['unidad']}`| Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
 
