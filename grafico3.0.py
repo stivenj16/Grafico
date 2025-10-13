@@ -178,7 +178,7 @@ st.write(f"**Ganancia de Antena:** {ganancia_ant_dBi:.1f} dBi")
 st.write(f"**Ganancia Total del Sistema:** {G_total_dB:.2f} dB")
 st.markdown("---")
 st.write("Potencias")
-st.write(f"**Potencia Total Combinada:** {P_total_w:.2f} μW = {P_combinada_dBm:.2f} dBm")
+st.write(f"**Potencia Total Combinada:** {P_total_w:.2f} W = {P_combinada_dBm:.2f} dBm")
 st.write(f"**Pico de Potencia Radiada Total:** {P_combinada_dBm + G_total_dB:.2f} dBm\n")
 st.markdown("---")
 st.write("Parámetros de Ruido")
@@ -188,4 +188,5 @@ st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
        st.markdown(f"**{tx_data['nombre']}**| Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
+
 
