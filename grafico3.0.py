@@ -17,8 +17,7 @@ bw_medidor = 1e6
 
 # --- FUNCIONES AUXILIARES ---
 def w_to_dbm(P_w):
-    """Convierte potencia en W a dBm"""
-    return 10 * np.log10(P_w) + 30
+    return 10 * np.log10(P_w / 0.001)
 
 def calcular_piso_ruido(T, B):
     kTB_W = kB * T * B
@@ -48,7 +47,7 @@ def get_espectro_total(f, transmisores, combinador_perdida_dB, G_total_dB, N_Pis
 
 # --- INTERFAZ STREAMLIT ---
 st.set_page_config(page_title="Simulación de Transmisores", layout="wide")
-st.title("📡 Simulación de Espectro - Sistema de 3 Transmisores (W)")
+st.title("📡 Simulación de Espectro - Sistema de 3 Transmisores")
 
 colores = ['#0078D7', '#28a745', '#ff9800']
 
@@ -67,7 +66,7 @@ transmisores = []
 for i in range(3):
     st.sidebar.subheader(f"Transmisor {i+1}")
     activo = st.sidebar.checkbox(f"Activar Tx{i+1}", value=True)
-    P_tx = st.sidebar.number_input(f"Potencia Tx{i+1} (W)", min_value=0.0, value=0.001, step=0.001)
+    P_tx = st.sidebar.number_input(f"Potencia Tx{i+1} (W)", min_value=0.0, value=1000.0, step=100.0)
     Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=2400.0 + i*10, step=1.0)
     Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=20.0, step=1.0)
 
@@ -82,7 +81,7 @@ for i in range(3):
 # --- VALIDACIÓN ---
 activos = [tx for tx in transmisores if tx["activo"] and tx["P_tx_W"] > 0]
 if not activos:
-    st.warning("⚠️ Debe ingresar al menos un transmisor activo con potencia mayor a 0 W.")
+    st.warning("⚠️ Debe ingresar al menos un transmisor activo con potencia mayor a 0 μW.")
     st.stop()
 
 # --- CÁLCULOS ---
@@ -126,48 +125,67 @@ for i, tx in enumerate(activos):
 # --- ANOTACIONES ---
 for tx_data in espectros_individuales:
     color = tx_data['color']
+    # Anotación para frecuencia central
     ax.text(tx_data['Fc']/1e6, N_Piso_dBm - 15,
             f"Fc: {tx_data['Fc']/1e6:.1f} MHz",
             ha='center', va='top', color=color, fontsize=9,
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+    
+    # Anotación para frecuencias mínima y máxima
     ax.text(tx_data['f_min']/1e6, N_Piso_dBm - 10,
             f"{tx_data['f_min']/1e6:.1f} MHz",
             ha='center', va='top', color=color, fontsize=8,
             bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.7))
+    
     ax.text(tx_data['f_max']/1e6, N_Piso_dBm - 10,
             f"{tx_data['f_max']/1e6:.1f} MHz",
             ha='center', va='top', color=color, fontsize=8,
             bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.7))
+    
+    # Anotación para pico individual
     ax.text(f_min_grafico/1e6 + 50, tx_data['P_pico'],
             f"{tx_data['nombre']}: {tx_data['P_pico']:.2f} dBm",
             ha='left', va='center', color=color, fontsize=9,
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
 
+# Anotación para piso de ruido
 ax.text(f_min_grafico/1e6 + 50, N_Piso_dBm,
         f"Ruido: {N_Piso_dBm:.2f} dBm",
         ha='left', va='center', color='red', fontsize=9,
         bbox=dict(boxstyle="round,pad=0.2", facecolor="mistyrose", alpha=0.8))
 
+# --- FORMATO FINAL ---
 ax.axhline(y=N_Piso_dBm, color='red', linestyle=':', label=f'Piso de Ruido: {N_Piso_dBm:.2f} dBm')
 ax.set_xlabel('Frecuencia (MHz)')
 ax.set_ylabel('Potencia (dBm)')
 ax.set_title('Espectro de Potencias - Sistema de Transmisores')
 ax.legend()
 ax.grid(True, linestyle=':', alpha=0.6)
+
 st.pyplot(fig)
 
 # --- RESULTADOS NUMÉRICOS ---
-P_total_W = sum(tx['P_tx_W'] for tx in activos)
-P_combinada_dBm = w_to_dbm(P_total_W) - combinador_perdida_dB
+P_total_w = sum(tx['P_tx_W'] for tx in activos)
+P_combinada_dBm = w_to_dbm(P_total_w) - combinador_perdida_dB
 
 st.subheader("📈 Resultados del Sistema")
-st.write(f"**Potencia Total Combinada:** {P_total_W:.6f} W = {P_combinada_dBm:.2f} dBm")
-st.write(f"**Ganancia Total:** {G_total_dB:.2f} dB")
-st.write(f"**Pico Total Radiado:** {P_combinada_dBm + G_total_dB:.2f} dBm")
-st.write(f"**Piso de Ruido:** {N_Piso_dBm:.2f} dBm")
+
+st.write("Cadena de Transmisión")
+st.write(f"**Pérdida del Combinador:** {combinador_perdida_dB:.1f} dB")
+st.write(f"**Ganancia del Amplificador:** {ganancia_amp_dB:.1f} dB")
+st.write(f"**Pérdida en Línea de Tx:** {perdida_ltx_dB:.1f} dB")
+st.write(f"**Ganancia de Antena:** {ganancia_ant_dBi:.1f} dBi")
+st.write(f"**Ganancia Total del Sistema:** {G_total_dB:.2f} dB")
+st.markdown("---")
+st.write("Potencias")
+st.write(f"**Potencia Total Combinada:** {P_total_w:.2f} μW = {P_combinada_dBm:.2f} dBm")
+st.write(f"**Pico de Potencia Radiada Total:** {P_combinada_dBm + G_total_dB:.2f} dBm\n")
+st.markdown("---")
+st.write("Parámetros de Ruido")
+st.write(f"**Piso de Ruido Térmico:** {N_Piso_dBm:.2f} dBm\n")
 
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
-    st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`")
+       st.markdown(f"**{tx_data['nombre']}**| Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
 
