@@ -187,7 +187,8 @@ st.write(f"**Piso de Ruido Térmico:** {N_Piso_dBm:.2f} dBm\n")
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
-    st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`")
+    st.markdown(f"**{tx_data['nombre']}**| μW: `tx_data['P_tx_uW'] μW | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz| Fmax: `{tx_data['f_max']/1e6:.1f} MHz")
+
 
 
 
