@@ -31,15 +31,13 @@ def get_espectro_individual(f, fc, bw, P_pico, N_Piso_dBm):
     espectro[mask] = P_pico - 3 * (np.abs(f[mask] - fc) / (bw / 2))
     return espectro
 
-# --- INTERFAZ DE USUARIO ---
-st.title("🔊 Sistema de 3 Transmisores - Simulación Espectral")
-
-st.sidebar.header("⚙️ Parámetros del Sistema")
-ganancia_amp_dB = st.sidebar.number_input("Ganancia Amplificador (dB)", 0.0, 50.0, 10.0)
-perdida_ltx_dB = st.sidebar.number_input("Pérdida en Línea Tx (dB)", 0.0, 10.0, 2.0)
-ganancia_ant_dBi = st.sidebar.number_input("Ganancia de Antena (dBi)", 0.0, 20.0, 5.0)
-combinador_perdida_dB = st.sidebar.number_input("Pérdida del Combinador (dB)", 0.0, 10.0, 3.0)
+# Configuración general de la cadena
+combinador_perdida_dB = 0.0
+ganancia_amp_dB = 20.0
+perdida_ltx_dB = 7.5
+ganancia_ant_dBi = 24.0
 G_total_dB = ganancia_amp_dB - perdida_ltx_dB + ganancia_ant_dBi
+N_Piso_dBm = calcular_piso_ruido(Temperatura_K, bw_medidor)
 
 # --- CONFIGURACIÓN DE TRANSMISORES ---
 st.sidebar.subheader("📡 Transmisores")
@@ -160,3 +158,4 @@ if st.button("📈 Calcular y Mostrar Resultados"):
         texto.append("-" * 60)
 
         st.text("\n".join(texto))
+
