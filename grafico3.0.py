@@ -169,14 +169,25 @@ P_total_uw = sum(tx['P_tx_uW'] for tx in activos)
 P_combinada_dBm = uw_to_dbm(P_total_uw) - combinador_perdida_dB
 
 st.subheader("📈 Resultados del Sistema")
+
+st.write("Cadena de Transmisión")
+st.write(f"**Pérdida del Combinador:** {combinador_perdida_dB:.1f} dB")
+st.write(f"**Ganancia del Amplificador:** {ganancia_amp_dB:.1f} dB")
+st.write(f"**Pérdida en Línea de Tx:** {perdida_ltx_dB:.1f} dB")
+st.write(f"**Ganancia de Antena:** {ganancia_ant_dBi:.1f} dBi")
+st.write(f"**Ganancia Total del Sistema:** {G_total_dB:.2f} dB")
+st.markdown("---")
+st.write("Potencias")
 st.write(f"**Potencia Total Combinada:** {P_total_uw:.2f} μW = {P_combinada_dBm:.2f} dBm")
-st.write(f"**Ganancia Total:** {G_total_dB:.2f} dB")
-st.write(f"**Pico Total Radiado:** {P_combinada_dBm + G_total_dB:.2f} dBm")
-st.write(f"**Piso de Ruido:** {N_Piso_dBm:.2f} dBm")
+st.write(f"**Pico de Potencia Radiada Total:** {P_combinada_dBm + G_total_dB:.2f} dBm\n")
+st.markdown("---")
+st.write("Parámetros de Ruido")
+st.write(f"**Piso de Ruido Térmico:** {N_Piso_dBm:.2f} dBm\n")
 
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
     st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`")
+
 
 
