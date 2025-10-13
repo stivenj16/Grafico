@@ -94,31 +94,71 @@ if activos:
     f_eje = np.linspace(f_min_grafico, f_max_grafico, 2000)
     espectro_total = get_espectro_total(f_eje, transmisores, N_Piso_dBm)
 
-    # --- Gráfica ---
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(f_eje/1e6, espectro_total, 'k', linewidth=3, label='Espectro Total')
+    # --- GRÁFICA ---
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(f_eje / 1e6, espectro_total, 'k', linewidth=3, label='Espectro Total', alpha=0.8)
 
-    espectros_individuales = []
-    for i, tx in enumerate(activos):
-        P_individual_dBm = uw_to_dbm(tx['P_tx_uW']) - combinador_perdida_dB
-        P_individual_radiada_dBm = P_individual_dBm + G_total_dB
-        espectro_ind = get_espectro_individual(f_eje, tx['Fc'], tx['Bw_tx'], P_individual_radiada_dBm, N_Piso_dBm)
-        espectros_individuales.append(espectro_ind)
+espectros_individuales = []
+for i, tx in enumerate(activos):
+    P_individual_dBm = uw_to_dbm(tx['P_tx_uW']) - combinador_perdida_dB
+    P_pico = P_individual_dBm + G_total_dB
+    espectro_ind = get_espectro_individual(f_eje, tx['Fc'], tx['Bw_tx'], P_pico, N_Piso_dBm)
+    espectros_individuales.append({
+        "nombre": f"Tx{i+1}",
+        "color": tx['color'],
+        "Fc": tx['Fc'],
+        "f_min": tx['Fc'] - tx['Bw_tx']/2,
+        "f_max": tx['Fc'] + tx['Bw_tx']/2,
+        "P_pico": P_pico
+    })
 
-        ax.plot(f_eje/1e6, espectro_ind, linestyle='--', color=tx['color'], alpha=0.6,
-                label=f'Tx{i+1} Individual')
-        ax.axvline(tx['Fc']/1e6, color=tx['color'], linestyle='-', alpha=0.4)
-        ax.axvline((tx['Fc'] - tx['Bw_tx']/2)/1e6, color=tx['color'], linestyle=':')
-        ax.axvline((tx['Fc'] + tx['Bw_tx']/2)/1e6, color=tx['color'], linestyle=':')
+    ax.plot(f_eje / 1e6, espectro_ind, linestyle='--', color=tx['color'], alpha=0.7, label=f"Tx{i+1}")
+    ax.axvline(tx['Fc']/1e6, color=tx['color'], linestyle='-')
+    ax.axvline((tx['Fc'] - tx['Bw_tx']/2)/1e6, color=tx['color'], linestyle=':')
+    ax.axvline((tx['Fc'] + tx['Bw_tx']/2)/1e6, color=tx['color'], linestyle=':')
 
-    ax.axhline(y=N_Piso_dBm, color='red', linestyle=':', linewidth=2, label=f'Piso de Ruido {N_Piso_dBm:.2f} dBm')
-    ax.set_xlabel("Frecuencia (MHz)")
-    ax.set_ylabel("Potencia (dBm)")
-    ax.set_title("Espectro de Potencias - Sistema de Transmisores")
+# --- ANOTACIONES ---
+for tx_data in espectros_individuales:
+    color = tx_data['color']
+    # Anotación para frecuencia central
+    ax.text(tx_data['Fc']/1e6, N_Piso_dBm - 15,
+            f"Fc: {tx_data['Fc']/1e6:.1f} MHz",
+            ha='center', va='top', color=color, fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+    
+    # Anotación para frecuencias mínima y máxima
+    ax.text(tx_data['f_min']/1e6, N_Piso_dBm - 10,
+            f"{tx_data['f_min']/1e6:.1f} MHz",
+            ha='center', va='top', color=color, fontsize=8,
+            bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.7))
+    
+    ax.text(tx_data['f_max']/1e6, N_Piso_dBm - 10,
+            f"{tx_data['f_max']/1e6:.1f} MHz",
+            ha='center', va='top', color=color, fontsize=8,
+            bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.7))
+    
+    # Anotación para pico individual
+    ax.text(f_min_grafico/1e6 + 50, tx_data['P_pico'],
+            f"{tx_data['nombre']}: {tx_data['P_pico']:.2f} dBm",
+            ha='left', va='center', color=color, fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+
+    # Anotación para piso de ruido
+    ax.text(f_min_grafico/1e6 + 50, N_Piso_dBm,
+            f"Ruido: {N_Piso_dBm:.2f} dBm",
+            ha='left', va='center', color='red', fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="mistyrose", alpha=0.8))
+    
+    # --- FORMATO FINAL ---
+    ax.axhline(y=N_Piso_dBm, color='red', linestyle=':', label=f'Piso de Ruido: {N_Piso_dBm:.2f} dBm')
+    ax.set_xlabel('Frecuencia (MHz)')
+    ax.set_ylabel('Potencia (dBm)')
+    ax.set_title('Espectro de Potencias - Sistema de Transmisores')
     ax.legend()
-    ax.grid(True, linestyle=':')
-
+    ax.grid(True, linestyle=':', alpha=0.6)
+    
     st.pyplot(fig)
+
 
     # --- Resultados ---
     st.subheader("📊 Resultados del Sistema")
@@ -144,5 +184,6 @@ if activos:
 
 else:
     st.warning("⚠️ Activa al menos un transmisor para ver la gráfica.")
+
 
 
