@@ -134,8 +134,7 @@ for i, tx in enumerate(activos):
         "Fc": tx['Fc'],
         "f_min": tx['Fc'] - tx['Bw_tx']/2,
         "f_max": tx['Fc'] + tx['Bw_tx']/2,
-        "P_pico": P_pico,
-        "P_tx_original": tx['P_tx_W']
+        "P_pico": P_pico
     })
 
     ax.plot(f_eje / 1e6, espectro_ind, linestyle='--', color=tx['color'], alpha=0.7, label=f"Tx{i+1}")
@@ -209,6 +208,7 @@ st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
        st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
+
 
 
 
