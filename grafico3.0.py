@@ -67,22 +67,22 @@ st.sidebar.header("⚙️ Parámetros de la Cadena de Transmisión")
 
 combinador_perdida_dB = st.sidebar.number_input(
     "Pérdida del Combinador (dB)", 
-    min_value=0.0, max_value=20.0, value=0.0, step=0.5
+    min_value=0.0, max_value=200.0, value=0.0, step=0.5
 )
 
 ganancia_amp_dB = st.sidebar.number_input(
     "Ganancia del Amplificador (dB)", 
-    min_value=0.0, max_value=50.0, value=20.0, step=0.5
+    min_value=0.0, max_value=500.0, value=20.0, step=0.5
 )
 
 perdida_ltx_dB = st.sidebar.number_input(
     "Pérdida en Línea de Tx (dB)", 
-    min_value=0.0, max_value=20.0, value=7.5, step=0.5
+    min_value=0.0, max_value=200.0, value=7.5, step=0.5
 )
 
 ganancia_ant_dBi = st.sidebar.number_input(
     "Ganancia de Antena (dBi)", 
-    min_value=0.0, max_value=30.0, value=24.0, step=0.5
+    min_value=0.0, max_value=300.0, value=24.0, step=0.5
 )
 
 # Cálculo de la ganancia total y piso de ruido
@@ -228,4 +228,5 @@ st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
        st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
+
 
