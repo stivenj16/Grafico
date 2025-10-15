@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 import math
 import streamlit as st
 
-# --- CONSTANTE FÍSICA ---
-kB = 1.380649e-23  # Constante de Boltzmann (fija)
+# --- PARÁMETROS DEL SISTEMA ---
+Temperatura_K = 300
+kB = 1.380649e-23
+bw_medidor = 1e6
 
 # --- FUNCIONES AUXILIARES ---
 def convertir_a_watts(valor, unidad):
@@ -49,7 +51,7 @@ def get_espectro_total(f, transmisores, combinador_perdida_dB, G_total_dB, N_Pis
             espectro_individual = get_espectro_individual(
                 f, tx['Fc'], tx['Bw_tx'], P_individual_radiada_dBm, N_Piso_dBm
             )
-            potencia_lineal_total = 10 * (espectro_total / 10) + 10 * (espectro_individual / 10)
+            potencia_lineal_total = 10 ** (espectro_total / 10) + 10 ** (espectro_individual / 10)
             espectro_total = 10 * np.log10(potencia_lineal_total + 1e-10)
     return espectro_total
 
@@ -59,81 +61,49 @@ st.title("📡 Simulación de Espectro - Sistema de 3 Transmisores")
 
 colores = ['#0078D7', '#28a745', '#ff9800']
 
-# --- CONFIGURACIÓN DE LA CADENA DE TRANSMISIÓN ---
-st.sidebar.header("🔧 Configuración del Sistema")
+# Configuración general de la cadena
+# --- CONFIGURACIÓN GENERAL DE LA CADENA ---
+st.sidebar.header("⚙️ Parámetros de la Cadena de Transmisión")
 
-st.sidebar.subheader("Parámetros de la Cadena")
 combinador_perdida_dB = st.sidebar.number_input(
     "Pérdida del Combinador (dB)", 
-    min_value=0.0, 
-    value=0.0, 
-    step=0.1,
-    help="Pérdida de inserción en el combinador de señales"
+    min_value=0.0, max_value=20.0, value=0.0, step=0.5
 )
 
 ganancia_amp_dB = st.sidebar.number_input(
     "Ganancia del Amplificador (dB)", 
-    min_value=0.0, 
-    value=20.0, 
-    step=0.1,
-    help="Ganancia del amplificador de potencia"
+    min_value=0.0, max_value=50.0, value=20.0, step=0.5
 )
 
 perdida_ltx_dB = st.sidebar.number_input(
     "Pérdida en Línea de Tx (dB)", 
-    min_value=0.0, 
-    value=7.5, 
-    step=0.1,
-    help="Pérdidas en cables y conectores"
+    min_value=0.0, max_value=20.0, value=7.5, step=0.5
 )
 
 ganancia_ant_dBi = st.sidebar.number_input(
     "Ganancia de Antena (dBi)", 
-    min_value=0.0, 
-    value=24.0, 
-    step=0.1,
-    help="Ganancia de la antena en dBi"
+    min_value=0.0, max_value=30.0, value=24.0, step=0.5
 )
 
-# --- CONFIGURACIÓN DEL PISO DE RUIDO ---
-st.sidebar.subheader("Parámetros de Ruido Térmico")
-
-Temperatura_K = st.sidebar.number_input(
-    "Temperatura (K)", 
-    min_value=0.0, 
-    value=300.0, 
-    step=1.0,
-    help="Temperatura del sistema en Kelvin"
-)
-
-bw_medidor = st.sidebar.number_input(
-    "Ancho de Banda del Medidor (Hz)", 
-    min_value=1.0, 
-    value=1e6, 
-    step=1e5,
-    format="%.0f",
-    help="Ancho de banda de resolución del medidor"
-)
-
-# Calcular ganancia total y piso de ruido con los nuevos valores
+# Cálculo de la ganancia total y piso de ruido
 G_total_dB = ganancia_amp_dB - perdida_ltx_dB + ganancia_ant_dBi
 N_Piso_dBm = calcular_piso_ruido(Temperatura_K, bw_medidor)
 
-# --- ENTRADA DE DATOS DE TRANSMISORES ---
+# --- ENTRADA DE DATOS ---
 st.sidebar.header("📊 Parámetros de Transmisores")
 transmisores = []
 
 for i in range(3):
     st.sidebar.subheader(f"Transmisor {i+1}")
-    activo = st.sidebar.checkbox(f"Activar Tx{i+1}", value=True, key=f"activo_{i}")
+    activo = st.sidebar.checkbox(f"Activar Tx{i+1}", value=True)
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        P_tx = st.number_input(f"Potencia Tx{i+1}", min_value=0.0, value=1000.0, step=10.0, key=f"pot_{i}")
+        P_tx = st.number_input(f"Potencia Tx{i+1}", min_value=0.0, value=1000.0, step=10.0)
     with col2:
-        unidad = st.selectbox(f"Unidad Tx{i+1}", ["W", "mW", "µW", "GW"], index=0, key=f"unidad_{i}")
+        unidad = st.selectbox(f"Unidad Tx{i+1}", ["W", "mW", "µW", "GW"], index=0)
 
-    Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=2400.0 + i*10, step=1.0, key=f"fc_{i}")
-    Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=20.0, step=1.0, key=f"bw_{i}")
+    Fc = st.sidebar.number_input(f"Fc Tx{i+1} (MHz)", min_value=1.0, value=2400.0 + i*10, step=1.0)
+    Bw = st.sidebar.number_input(f"BW Tx{i+1} (MHz)", min_value=1.0, value=20.0, step=1.0)
 
     P_tx_W = convertir_a_watts(P_tx, unidad)
 
@@ -151,7 +121,7 @@ for i in range(3):
 # --- VALIDACIÓN ---
 activos = [tx for tx in transmisores if tx["activo"] and tx["P_tx_W"] > 0]
 if not activos:
-    st.warning("⚠️ Debe ingresar al menos un transmisor activo con potencia mayor a 0.")
+    st.warning("⚠️ Debe ingresar al menos un transmisor activo con potencia mayor a 0 μW.")
     st.stop()
 
 # --- CÁLCULOS ---
@@ -241,22 +211,21 @@ P_combinada_dBm = w_to_dbm(P_total_w) - combinador_perdida_dB
 st.subheader("📈 Resultados del Sistema")
 
 st.write("Cadena de Transmisión")
-st.write(f"*Pérdida del Combinador:* {combinador_perdida_dB:.1f} dB")
-st.write(f"*Ganancia del Amplificador:* {ganancia_amp_dB:.1f} dB")
-st.write(f"*Pérdida en Línea de Tx:* {perdida_ltx_dB:.1f} dB")
-st.write(f"*Ganancia de Antena:* {ganancia_ant_dBi:.1f} dBi")
-st.write(f"*Ganancia Total del Sistema:* {G_total_dB:.2f} dB")
+st.write(f"**Pérdida del Combinador:** {combinador_perdida_dB:.1f} dB")
+st.write(f"**Ganancia del Amplificador:** {ganancia_amp_dB:.1f} dB")
+st.write(f"**Pérdida en Línea de Tx:** {perdida_ltx_dB:.1f} dB")
+st.write(f"**Ganancia de Antena:** {ganancia_ant_dBi:.1f} dBi")
+st.write(f"**Ganancia Total del Sistema:** {G_total_dB:.2f} dB")
 st.markdown("---")
 st.write("Potencias")
-st.write(f"*Potencia Total Combinada:* {P_total_w:.2f} W = {P_combinada_dBm:.2f} dBm")
-st.write(f"*Pico de Potencia Radiada Total:* {P_combinada_dBm + G_total_dB:.2f} dBm\n")
+st.write(f"**Potencia Total Combinada:** {P_total_w:.2f} W = {P_combinada_dBm:.2f} dBm")
+st.write(f"**Pico de Potencia Radiada Total:** {P_combinada_dBm + G_total_dB:.2f} dBm\n")
 st.markdown("---")
 st.write("Parámetros de Ruido")
-st.write(f"*Temperatura del Sistema:* {Temperatura_K:.1f} K")
-st.write(f"*Ancho de Banda del Medidor:* {bw_medidor:.0f} Hz")
-st.write(f"*Piso de Ruido Térmico:* {N_Piso_dBm:.2f} dBm\n")
+st.write(f"**Piso de Ruido Térmico:** {N_Piso_dBm:.2f} dBm\n")
 
 st.markdown("---")
 st.subheader("📡 Detalles por Transmisor")
 for i, tx_data in enumerate(espectros_individuales):
-       st.markdown(f"*{tx_data['nombre']}* | Fc: {tx_data['Fc']/1e6:.2f} MHz | BW: {(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz | Pico: {tx_data['P_pico']:.2f} dBm|Fmin: {tx_data['f_min']/1e6:.1f} MHz| Fmax: {tx_data['f_max']/1e6:.1f} MHz")
+       st.markdown(f"**{tx_data['nombre']}** | Fc: `{tx_data['Fc']/1e6:.2f} MHz` | BW: `{(tx_data['f_max']-tx_data['f_min'])/1e6:.2f} MHz` | Pico: `{tx_data['P_pico']:.2f} dBm`|Fmin: `{tx_data['f_min']/1e6:.1f} MHz`| Fmax: `{tx_data['f_max']/1e6:.1f} MHz`")
+
